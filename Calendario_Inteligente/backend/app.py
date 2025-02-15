@@ -1,15 +1,8 @@
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from flask_migrate import Migrate
 from routes import eventos_bp
-from database import db, init_db
+import os
 
-app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:Ares1997@localhost:5432/calendario_db"
-
-init_db(app)
-migrate = Migrate(app, db)
-
+app = Flask(__name__, template_folder=os.path.join("../frontend/templates"))  # Usar la carpeta de templates en frontend
 app.register_blueprint(eventos_bp, url_prefix="/api")
 
 @app.route("/")
