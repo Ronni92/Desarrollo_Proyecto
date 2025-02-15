@@ -22,7 +22,7 @@ DATABASES = {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': 'calendario_db',
         'USER': 'postgres',
-        'PASSWORD': 'tu_password',
+        'PASSWORD': 'Ares:1997',
         'HOST': 'localhost',
         'PORT': '5432',
     }
