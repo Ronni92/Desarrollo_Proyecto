@@ -1,13 +1,38 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-<meta charset="UTF-8">
-       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-       <title>Calendario Inteligente</title>
-       <link rel="stylesheet" href="/static/style.css">
-   </head>
-   <body>
-       <h1>Bienvenido al Calendario Inteligente</h1>
-       <p>Aquí puedes gestionar tus eventos.</p>
-   </body>
-   </html>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calendario Inteligente</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Calendario Inteligente</h1>
+        <p>Sube una imagen y analiza el contenido para generar tu cronograma.</p>
+
+        <input type="file" id="imageInput" accept="image/*">
+        <button onclick="uploadImage()">Cargar Imagen</button>
+        <button onclick="analyzeImage()">Analizar</button>
+
+        <div id="result"></div>
+
+        <table id="scheduleTable">
+            <thead>
+                <tr>
+                    <th>Hora</th>
+                    <th>Evento</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Aquí se insertarán los datos dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <script src="/static/main.js"></script>
+</body>
+
+</html>
