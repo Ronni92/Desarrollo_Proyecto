@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario Generado</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <h1>Horario Generado</h1>
+
+    <table>
+        <tr>
+            <th>Lunes</th>
+            <th>Martes</th>
+            <th>Miércoles</th>
+            <th>Jueves</th>
+            <th>Viernes</th>
+        </tr>
+        <tr>
+            {% for dia in ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"] %}
+            <td>
+                <ul>
+                    {% for clase in horario[dia] %}
+                    <li>• {{ clase }}</li>
+                    {% endfor %}
+                </ul>
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+
+</body>
+
+</html>

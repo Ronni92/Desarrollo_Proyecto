@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado del OCR</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <h1>Horario Extraído</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miércoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hora, clases in horario.items() %}
+            <tr>
+                <td>{{ hora }}</td>
+                <td>{{ clases["Lunes"] }}</td>
+                <td>{{ clases["Martes"] }}</td>
+                <td>{{ clases["Miércoles"] }}</td>
+                <td>{{ clases["Jueves"] }}</td>
+                <td>{{ clases["Viernes"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+</body>
+
+</html>
