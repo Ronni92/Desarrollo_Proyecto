@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <title>Subir Imagen</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <h1>Subir Imagen</h1>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="file" accept="image/*" required>
+        <button type="submit">Subir Imagen</button>
+    </form>
+</body>
+</html>

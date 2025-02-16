@@ -1,14 +1,16 @@
-from database import db
-from werkzeug.security import generate_password_hash, check_password_hash
+from database import get_db_connection
 
-class Usuario(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(50), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(255), nullable=False)
-
-    def set_password(self, password):
-        self.password = generate_password_hash(password)
-
-    def check_password(self, password):
-        return check_password_hash(self.password, password)
+def create_tables():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS usuario (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(50) UNIQUE NOT NULL,
+            email VARCHAR(120) UNIQUE NOT NULL,
+            password VARCHAR(255) NOT NULL
+        );
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
