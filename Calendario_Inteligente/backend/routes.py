@@ -6,33 +6,17 @@ import cv2
 import numpy as np
 from database import get_db_connection
 from dotenv import load_dotenv
-import openai
+import groq
 
 # ==============================
 # 🔹 CARGAR CONFIGURACIONES Y API KEY
 # ==============================
-# Cargar la API Key desde .env
-# Cargar la API Key desde .env
-load_dotenv()
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+load_dotenv()  # Cargar variables de entorno desde .env
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Configurar el cliente con la API de DeepSeek
-# Cargar la API Key desde .env
-load_dotenv()
-DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+# Configurar cliente de GROQ
+client = groq.Groq(api_key=GROQ_API_KEY)
 
-# Configurar OpenAI para usar DeepSeek
-openai.api_key = DEEPSEEK_API_KEY
-openai.base_url = "https://api.deepseek.com/v1"  # Asegurar que se usa la API de DeepSeek
-
-# Prueba de conexión con DeepSeek
-response = openai.ChatCompletion.create(
-    model="deepseek-chat",
-    messages=[{"role": "user", "content": "¿Cómo extraer texto de una imagen?"}]
-)
-
-# Mostrar la respuesta
-print(response["choices"][0]["message"]["content"])
 # ==============================
 # 🔹 BLUEPRINTS PARA RUTAS
 # ==============================
@@ -84,11 +68,11 @@ def procesar_texto_a_tabla(text):
     return horario
 
 # ==============================
-# 🔹 PROCESAMIENTO DE IMÁGENES Y OCR CON DEEPSEEK
+# 🔹 PROCESAMIENTO DE IMÁGENES Y OCR CON GROQ
 # ==============================
 @eventos_bp.route("/upload", methods=["GET", "POST"])
 def upload():
-    """ Subida de imágenes y procesamiento OCR usando DeepSeek """
+    """ Subida de imágenes y procesamiento OCR usando GROQ """
     if request.method == "POST":
         if "file" not in request.files:
             return "No se ha subido ninguna imagen", 400
@@ -108,15 +92,15 @@ def upload():
         text = pytesseract.image_to_string(Image.open(filepath), config='--psm 6')  # OCR tradicional
         text = limpiar_texto(text)  # Limpieza del texto extraído
 
-        # Llamada a DeepSeek para mejorar la estructuración del texto
-        response = openai.ChatCompletion.create(
-            model="deepseek-chat",
+        # Llamada a GROQ para mejorar la estructuración del texto
+        response = client.chat.completions.create(
+            model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": "Eres un asistente que organiza horarios de clases extraídos de imágenes."},
                 {"role": "user", "content": f"Organiza este horario en una estructura clara: {text}"}
             ]
         )
-        texto_mejorado = response["choices"][0]["message"]["content"]
+        texto_mejorado = response.choices[0].message.content
 
         # Convertir a tabla estructurada
         horario = procesar_texto_a_tabla(texto_mejorado)

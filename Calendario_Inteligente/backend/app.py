@@ -1,6 +1,10 @@
 from flask import Flask, render_template
 from routes import eventos_bp, auth_bp
+from dotenv import load_dotenv
 import os
+
+# Cargar variables de entorno
+load_dotenv()
 
 app = Flask(__name__, template_folder=os.path.join("../frontend/templates"))  # Asegurar la ruta correcta
 app.secret_key = "tu_clave_secreta"
