@@ -1,49 +1,44 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
-import pytesseract
-from PIL import Image
+from flask import Blueprint, render_template, request, jsonify
 import os
+import pytesseract
+import openai
 import cv2
-import numpy as np
-from database import get_db_connection
 from dotenv import load_dotenv
-import groq
+from PIL import Image
+from database import get_db_connection
 
-# ==============================
-# 🔹 CARGAR CONFIGURACIONES Y API KEY
-# ==============================
-load_dotenv()  # Cargar variables de entorno desde .env
+# Cargar API Key
+load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-# Configurar cliente de GROQ
-client = groq.Groq(api_key=GROQ_API_KEY)
+# Configurar OpenAI para usar GROQ
+openai.api_key = GROQ_API_KEY
+openai.base_url = "https://api.groq.com/v1"
 
-# ==============================
-# 🔹 BLUEPRINTS PARA RUTAS
-# ==============================
+# Blueprint de eventos
 eventos_bp = Blueprint("eventos", __name__)
-auth_bp = Blueprint("auth", __name__)
 
-# ==============================
-# 🔹 FUNCIONES DE PROCESAMIENTO
-# ==============================
-ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
-
-def allowed_file(filename):
-    """ Verifica si el archivo tiene una extensión permitida """
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
+# -------------------------
+# 📌 Procesar imagen antes del OCR
+# -------------------------
 def preprocess_image(image_path):
     """ Convierte la imagen a escala de grises y aplica binarización para mejorar OCR """
-    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)  # Escala de grises
-    _, thresh = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)  # Binarización
+    image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
+    _, thresh = cv2.threshold(image, 150, 255, cv2.THRESH_BINARY)
     return thresh
 
+# -------------------------
+# 📌 Limpiar texto extraído
+# -------------------------
 def limpiar_texto(texto):
-    """ Elimina líneas vacías y caracteres extraños del texto OCR """
+    """ Elimina líneas vacías y caracteres innecesarios """
     lineas = texto.split("\n")
     lineas_filtradas = [linea.strip() for linea in lineas if len(linea.strip()) > 5]
     return "\n".join(lineas_filtradas)
 
+# -------------------------
+# 📌 Organizar texto en tabla
+# -------------------------
 def procesar_texto_a_tabla(text):
     """ Convierte el texto extraído en una tabla estructurada """
     dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"]
@@ -63,104 +58,53 @@ def procesar_texto_a_tabla(text):
                 break
 
         if dia_actual:
-            horario[dia_actual].append(linea)
+            horario[dia_actual].append({
+                "hora_inicio": "08:00",  # Se pueden mejorar con regex
+                "hora_fin": "10:00",
+                "materia": linea,
+                "aula": "Aula 101"
+            })
     
     return horario
 
-# ==============================
-# 🔹 PROCESAMIENTO DE IMÁGENES Y OCR CON GROQ
-# ==============================
+# -------------------------
+# 📌 Endpoint para subir imagen y mostrar horario
+# -------------------------
 @eventos_bp.route("/upload", methods=["GET", "POST"])
 def upload():
     """ Subida de imágenes y procesamiento OCR usando GROQ """
     if request.method == "POST":
         if "file" not in request.files:
-            return "No se ha subido ninguna imagen", 400
+            return jsonify({"error": "No se ha subido ninguna imagen"}), 400
 
         file = request.files["file"]
+        if file.filename == "":
+            return jsonify({"error": "Nombre de archivo inválido"}), 400
 
-        if file.filename == "" or not allowed_file(file.filename):
-            return "Formato de imagen no permitido. Usa PNG o JPG", 400
-
+        # Guardar imagen
         upload_folder = "uploads"
         os.makedirs(upload_folder, exist_ok=True)
         filepath = os.path.join(upload_folder, file.filename)
         file.save(filepath)
 
-        # Preprocesar la imagen antes de OCR
+        # Procesar la imagen con OCR
         processed_image = preprocess_image(filepath)
-        text = pytesseract.image_to_string(Image.open(filepath), config='--psm 6')  # OCR tradicional
-        text = limpiar_texto(text)  # Limpieza del texto extraído
+        text = pytesseract.image_to_string(Image.open(filepath), config='--psm 6')
+        text = limpiar_texto(text)
 
-        # Llamada a GROQ para mejorar la estructuración del texto
-        response = client.chat.completions.create(
+        # -------------------------
+        # 📌 Llamada a GROQ para estructurar
+        # -------------------------
+        response = openai.ChatCompletion.create(
             model="llama3-8b-8192",
             messages=[
                 {"role": "system", "content": "Eres un asistente que organiza horarios de clases extraídos de imágenes."},
-                {"role": "user", "content": f"Organiza este horario en una estructura clara: {text}"}
+                {"role": "user", "content": f"Organiza este horario en una tabla estructurada: {text}"}
             ]
         )
-        texto_mejorado = response.choices[0].message.content
-
-        # Convertir a tabla estructurada
+        texto_mejorado = response["choices"][0]["message"]["content"]
         horario = procesar_texto_a_tabla(texto_mejorado)
 
         return render_template("horario.html", horario=horario)
-    
+
     return render_template("upload.html")
-
-# ==============================
-# 🔹 AUTENTICACIÓN DE USUARIOS
-# ==============================
-@auth_bp.route("/register", methods=["GET", "POST"])
-def register():
-    """ Registro de usuarios """
-    if request.method == "POST":
-        username = request.form["username"]
-        email = request.form["email"]
-        password = request.form["password"]
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("SELECT * FROM usuario WHERE username = %s OR email = %s", (username, email))
-        if cur.fetchone():
-            cur.close()
-            conn.close()
-            return "⚠ Usuario o correo ya registrado."
-
-        cur.execute("INSERT INTO usuario (username, email, password) VALUES (%s, %s, %s)", (username, email, password))
-        conn.commit()
-        cur.close()
-        conn.close()
-        return redirect(url_for("auth.login"))
-    
-    return render_template("register.html")
-
-@auth_bp.route("/login", methods=["GET", "POST"])
-def login():
-    """ Inicio de sesión """
-    if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
-
-        conn = get_db_connection()
-        cur = conn.cursor()
-
-        cur.execute("SELECT id FROM usuario WHERE email = %s AND password = %s", (email, password))
-        user = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        if user:
-            session["user_id"] = user[0]
-            return redirect(url_for("index"))
-        return "⚠ Credenciales incorrectas."
-    
-    return render_template("login.html")
-
-@auth_bp.route("/logout")
-def logout():
-    """ Cierre de sesión """
-    session.pop("user_id", None)
-    return redirect(url_for("index"))
