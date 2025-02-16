@@ -1,12 +1,54 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Resultado del OCR</title>
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
 </head>
 <body>
-    <h1>Texto Extraído</h1>
-    <p>{{ text }}</p>
+    <h1>Horario Extraído</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Hora</th>
+                <th>Lunes</th>
+                <th>Martes</th>
+                <th>Miércoles</th>
+                <th>Jueves</th>
+                <th>Viernes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for hora, clases in horario.items() %}
+            <tr>
+                <td>{{ hora }}</td>
+                <td>{{ clases["Lunes"] }}</td>
+                <td>{{ clases["Martes"] }}</td>
+                <td>{{ clases["Miércoles"] }}</td>
+                <td>{{ clases["Jueves"] }}</td>
+                <td>{{ clases["Viernes"] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
     <a href="/">Volver al inicio</a>
 </body>
 </html>

@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Horario Generado</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Horario Generado</h1>
+
+    <table>
+        <tr>
+            <!-- Encabezado con los días en forma horizontal -->
+            <th>Lunes</th>
+            <th>Martes</th>
+            <th>Miércoles</th>
+            <th>Jueves</th>
+            <th>Viernes</th>
+        </tr>
+        <tr>
+            <!-- Clases organizadas bajo cada día -->
+            {% for dia in ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes"] %}
+                <td>
+                    <ul>
+                        {% for clase in horario[dia] %}
+                            <li>• {{ clase }}</li>
+                        {% endfor %}
+                    </ul>
+                </td>
+            {% endfor %}
+        </tr>
+    </table>
+
+    <br>
+    <a href="/">Volver al inicio</a>
+
+</body>
+</html>
